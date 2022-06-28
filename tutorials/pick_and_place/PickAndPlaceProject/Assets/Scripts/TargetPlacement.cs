@@ -118,7 +118,7 @@ namespace Unity.Robotics.PickAndPlace
 
         void OnTriggerEnter(Collider other)
         {
-            if (other.gameObject.name == m_Target.name)
+            if (m_Target !=null && other.gameObject.name == m_Target.name)
             {
                 CurrentState = PlacementState.InsideFloating;
             }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using RosMessageTypes.Geometry;
 using RosMessageTypes.NiryoMoveit;
@@ -26,8 +27,8 @@ public class TrajectoryPlanner : MonoBehaviour
     GameObject m_Target;
     public GameObject Target { get => m_Target; set => m_Target = value; }
     [SerializeField]
-    GameObject m_TargetPlacement;
-    public GameObject TargetPlacement { get => m_TargetPlacement; set => m_TargetPlacement = value; }
+    List<GameObject> m_TargetPlacement = new List<GameObject>();
+    public List<GameObject> TargetPlacement { get => m_TargetPlacement; set => m_TargetPlacement = value; }
 
     // Assures that the gripper is always positioned above the m_Target cube before grasping.
     readonly Quaternion m_PickOrientation = Quaternion.Euler(90, 90, 0);
@@ -41,6 +42,8 @@ public class TrajectoryPlanner : MonoBehaviour
 
     // ROS Connector
     ROSConnection m_Ros;
+
+    int targetPlacementIndex;
 
     /// <summary>
     ///     Find all robot joints in Awake() and add them to the jointArticulationBodies array.
@@ -123,22 +126,24 @@ public class TrajectoryPlanner : MonoBehaviour
     /// </summary>
     public void PublishJoints()
     {
+        var target = GameObject.Instantiate(m_Target);
+        target.SetActive(true);
         var request = new MoverServiceRequest();
         request.joints_input = CurrentJointConfig();
 
         // Pick Pose
         request.pick_pose = new PoseMsg
         {
-            position = (m_Target.transform.localPosition + m_PickPoseOffset).To<FLU>(),
+            position = (target.transform.localPosition + m_PickPoseOffset).To<FLU>(),
 
             // The hardcoded x/z angles assure that the gripper is always positioned above the target cube before grasping.
-            orientation = Quaternion.Euler(90, m_Target.transform.eulerAngles.y, 0).To<FLU>()
+            orientation = Quaternion.Euler(90, target.transform.eulerAngles.y, 0).To<FLU>()
         };
 
         // Place Pose
         request.place_pose = new PoseMsg
         {
-            position = (m_TargetPlacement.transform.localPosition + m_PickPoseOffset).To<FLU>(),
+            position = (m_TargetPlacement[targetPlacementIndex].transform.localPosition + m_PickPoseOffset).To<FLU>(),
             orientation = m_PickOrientation.To<FLU>()
         };
 
@@ -206,6 +211,8 @@ public class TrajectoryPlanner : MonoBehaviour
 
             // All trajectories have been executed, open the gripper to place the target cube
             OpenGripper();
+            targetPlacementIndex += 1;
+            targetPlacementIndex %= m_TargetPlacement.Count;
         }
     }
 
