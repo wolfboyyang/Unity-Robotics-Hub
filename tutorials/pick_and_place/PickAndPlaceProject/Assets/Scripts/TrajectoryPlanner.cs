@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RosMessageTypes.Geometry;
 using RosMessageTypes.NiryoMoveit;
+using Unity.Robotics.PickAndPlace;
 using Unity.Robotics.ROSTCPConnector;
 using Unity.Robotics.ROSTCPConnector.ROSGeometry;
 using UnityEngine;
@@ -126,6 +127,7 @@ public class TrajectoryPlanner : MonoBehaviour
     /// </summary>
     public void PublishJoints()
     {
+        m_Target.SetActive(false);
         var target = GameObject.Instantiate(m_Target);
         target.SetActive(true);
         var request = new MoverServiceRequest();
@@ -140,10 +142,13 @@ public class TrajectoryPlanner : MonoBehaviour
             orientation = Quaternion.Euler(90, target.transform.eulerAngles.y, 0).To<FLU>()
         };
 
+        var targetPlacement = m_TargetPlacement[targetPlacementIndex];
+        targetPlacement.GetComponent<TargetPlacement>().Target = target;
+
         // Place Pose
         request.place_pose = new PoseMsg
         {
-            position = (m_TargetPlacement[targetPlacementIndex].transform.localPosition + m_PickPoseOffset).To<FLU>(),
+            position = (targetPlacement.transform.localPosition + m_PickPoseOffset).To<FLU>(),
             orientation = m_PickOrientation.To<FLU>()
         };
 

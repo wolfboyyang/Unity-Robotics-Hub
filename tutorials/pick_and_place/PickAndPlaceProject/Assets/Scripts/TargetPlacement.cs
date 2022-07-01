@@ -18,6 +18,14 @@ namespace Unity.Robotics.PickAndPlace
         [SerializeField]
         [Tooltip("Target object expected by this placement area. Can be left blank if only one Target in scene")]
         GameObject m_Target;
+
+        public GameObject Target {
+            get => m_Target;
+            set {
+                m_Target = value;
+                OnValidate();
+            }
+        }
         [SerializeField]
         [Range(0, 255)]
         [Tooltip("Alpha value for any color set during state changes.")]
